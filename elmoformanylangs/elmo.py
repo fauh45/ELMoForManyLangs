@@ -13,6 +13,8 @@ from .frontend import create_one_batch
 from .frontend import Model
 import numpy as np
 
+# from torchviz import make_dot
+
 logger = logging.getLogger("elmoformanylangs")
 
 
@@ -241,15 +243,13 @@ class Embedder(object):
         return model, config
 
     def sents2elmo(self, sents, output_layer=-1):
-        read_function = read_list
-
         if self.config["token_embedder"]["name"].lower() == "cnn":
-            test, text = read_function(
+            test, text = read_list(
                 sents,
                 self.config["token_embedder"]["max_characters_per_token"],
             )
         else:
-            test, text = read_function(sents)
+            test, text = read_list(sents)
 
         # create test batches from the input data.
         (
@@ -275,19 +275,35 @@ class Embedder(object):
             test_w, test_c, test_lens, test_masks, test_text
         ):
             output = self.model.forward(w, c, masks)
+
+            # dot = make_dot(
+            #     output,
+            #     params=dict(self.model.named_parameters()),
+            #     show_attrs=True,
+            #     show_saved=True,
+            # )
+            # dot.format = "svg"
+            # dot.render("mainmodeloutput")
+
+            # print("Model output")
+            # print(output)
+            # print("Model config used")
+            # print(self.config)
+
             for i, text in enumerate(texts):
                 if self.config["encoder"]["name"].lower() == "lstm":
-                    data = output[i, 1 : lens[i] - 1, :].data
-                    if self.use_cuda:
-                        data = data.cpu()
+                    data = output[i, 1 : lens[i] - 1, :]
+                    # if self.use_cuda:
+                    #     data = data.cpu()
                     # data = data.numpy()
                 elif self.config["encoder"]["name"].lower() == "elmo":
-                    data = output[:, i, 1 : lens[i] - 1, :].data
-                    if self.use_cuda:
-                        data = data.cpu()
+                    data = output[:, i, 1 : lens[i] - 1, :]
+                    # if self.use_cuda:
+                    #     data = data.cpu()
                     # data = data.numpy()
 
-                # print(data.shape)
+                # print("Data on enumerate texts")
+                # print(data)
 
                 if output_layer == -1:
                     payload = torch.mean(data, (0,))
@@ -313,4 +329,16 @@ class Embedder(object):
 if __name__ == "__main__":
     embedder = Embedder("/home/fauh45/Code/KoTA307/APE/pretrained_model/ELMo")
     result = embedder.sents2elmo(["halo nama saya fauzan".split(" ")])
+
+    # print(dict(embedder.model.named_parameters()))
+
+    # dot = make_dot(
+    #     result[0],
+    #     params=dict(embedder.model.named_parameters()),
+    #     show_attrs=True,
+    #     show_saved=True,
+    # )
+    # dot.format = "svg"
+    # dot.render("elmoouput")
+
     print(result)

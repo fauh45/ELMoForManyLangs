@@ -302,11 +302,11 @@ class Embedder(object):
                     #     data = data.cpu()
                     # data = data.numpy()
 
-                # print("Data on enumerate texts")
-                # print(data)
+                # print("Raw data", data)
+                # print("Raw data shape", data.shape)
 
                 if output_layer == -1:
-                    payload = torch.mean(data, (0,))
+                    payload = torch.mean(data, (0, 1))
                     # payload = np.average(data, axis=0)
                 elif output_layer == -2:
                     payload = data
@@ -315,8 +315,8 @@ class Embedder(object):
 
                 after_elmo.append(payload)
 
-                # print(payload)
-                # print(payload.shape)
+                # print("Payload", payload)
+                # print("Payload shape", payload.shape)
 
                 cnt += 1
                 if cnt % 1000 == 0:
@@ -328,7 +328,15 @@ class Embedder(object):
 
 if __name__ == "__main__":
     embedder = Embedder("/home/fauh45/Code/KoTA307/APE/pretrained_model/ELMo")
-    result = embedder.sents2elmo(["halo nama saya fauzan".split(" ")])
+    result = embedder.sents2elmo(
+        [
+            "halo nama saya fauzan".split(" "),
+            "saya suka makan aki bakar".split(" "),
+            "ini test untuk liat hasil dari setiap batch size itu gimana gitu harusnya sih keluarannya sama semua tapi kok kadang gak gitu ya?".split(
+                " "
+            ),
+        ]
+    )
 
     # print(dict(embedder.model.named_parameters()))
 
@@ -342,3 +350,4 @@ if __name__ == "__main__":
     # dot.render("elmoouput")
 
     print(result)
+    print(torch.stack(result, 0))
